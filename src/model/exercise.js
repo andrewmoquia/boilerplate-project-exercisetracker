@@ -1,7 +1,7 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model } = require("mongoose");
 
 const exerciseSchema = new Schema({
-  user_id: { type: String },
+  username: { type: String },
   description: { type: String },
   duration: { type: Number },
   date: { type: String },
