@@ -6,6 +6,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
+//Schemas
 const userSchema = new Schema({
   username: String,
 });
@@ -24,9 +25,9 @@ const logSchema = new Schema({
 });
 
 // Models
-const UserInfo = mongoose.model("userInfo", userSchema);
-const ExerciseInfo = mongoose.model("exerciseInfo", exerciseSchema);
-const LogInfo = mongoose.model("logInfo", logSchema);
+const User = mongoose.model("users", userSchema);
+const Exercise = mongoose.model("exercises", exerciseSchema);
+const Log = mongoose.model("logs", logSchema);
 
 // Config
 const mongoURI = process.env.MONGO_URI || "mongouri";
@@ -52,14 +53,14 @@ app.get("/", (req, res) => {
 
 // Api Endpoints
 
-// #1
+// Create user account
 app.post("/api/users", (req, res) => {
-  UserInfo.find({ username: req.body.username }, (err, userData) => {
+  User.find({ username: req.body.username }, (err, userData) => {
     if (err) {
       console.log("Error with server=> ", err);
     } else {
       if (userData.length === 0) {
-        const test = new UserInfo({
+        const test = new User({
           _id: req.body.id,
           username: req.body.username,
         });
@@ -81,7 +82,7 @@ app.post("/api/users", (req, res) => {
   });
 });
 
-// #2
+// Create exercise
 app.post("/api/users/:_id/exercises", (req, res) => {
   let idJson = { id: req.params._id };
   let checkedDate = new Date(req.body.date);
@@ -95,13 +96,13 @@ app.post("/api/users/:_id/exercises", (req, res) => {
     }
   };
 
-  UserInfo.findById(idToCheck, (err, data) => {
+  User.findById(idToCheck, (err, data) => {
     noDateHandler(checkedDate);
 
     if (err) {
       console.log("error with id=> ", err);
     } else {
-      const test = new ExerciseInfo({
+      const test = new Exercise({
         username: data.username,
         description: req.body.description,
         duration: req.body.duration,
@@ -126,15 +127,14 @@ app.post("/api/users/:_id/exercises", (req, res) => {
   });
 });
 
-// #3
-
+// Get exercise log
 app.get("/api/users/:_id/logs", (req, res) => {
   const { from, to, limit } = req.query;
   let idJson = { id: req.params._id };
   let idToCheck = idJson.id;
 
   // Check ID
-  UserInfo.findById(idToCheck, (err, data) => {
+  User.findById(idToCheck, (err, data) => {
     var query = {
       username: data.username,
     };
@@ -159,7 +159,7 @@ app.get("/api/users/:_id/logs", (req, res) => {
     if (err) {
       console.log("error with ID=> ", err);
     } else {
-      ExerciseInfo.find(
+      Exercise.find(
         query,
         null,
         { limit: limitChecker(+limit) },
@@ -177,7 +177,7 @@ app.get("/api/users/:_id/logs", (req, res) => {
               };
             });
 
-            const test = new LogInfo({
+            const test = new Log({
               username: data.username,
               count: loggedArray.length,
               log: loggedArray,
@@ -203,11 +203,11 @@ app.get("/api/users/:_id/logs", (req, res) => {
   });
 });
 
-// #4
+// Get all users
 app.get("/api/users", (req, res) => {
-  UserInfo.find({}, (err, data) => {
+  User.find({}, (err, data) => {
     if (err) {
-      res.send("No Users");
+      res.send("No users found.");
     } else {
       res.json(data);
     }
