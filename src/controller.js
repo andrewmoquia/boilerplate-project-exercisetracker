@@ -47,8 +47,14 @@ const createExercise = async (req, res) => {
 
       exercise.save((err, result) => {
         if (err) throw err;
-        const { _id, username, date, duration, description } = result._doc;
-        res.json({ _id, username, date, duration, description });
+        const { date, duration, description } = result._doc;
+        res.json({
+          _id: user._id,
+          username: user.username,
+          date,
+          duration,
+          description,
+        });
       });
     });
   } catch (err) {
@@ -69,17 +75,21 @@ const getUsers = (req, res) => {
 
 const getAllLogs = (req, res) => {
   const { id } = req.params;
+  const { from, to, limit } = req.query;
+
+  console.log({ from, to, limit });
   try {
-    User.findById(id, (err, user) => {
+    User.findById(id, async (err, user) => {
       if (err) throw err;
-      Exercise.find({ username: user.username }, (err, exercises) => {
-        if (err) throw err;
-        res.json({
-          _id: id,
-          username: user.username,
-          count: exercises.length,
-          log: [...exercises],
-        });
+      const exercise = await Exercise.find({
+        username: user.username,
+        date: { $gte: new Date(from), $lt: new Date(to) },
+      }).limit(Number(limit));
+      res.json({
+        _id: id,
+        username: user.username,
+        count: exercise.length,
+        log: [...exercise],
       });
     });
   } catch (err) {
