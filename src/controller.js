@@ -35,6 +35,7 @@ const createExercise = async (req, res) => {
 
       const exercise = new Exercise(
         {
+          _id,
           username: user.username,
           description,
           duration,
@@ -47,9 +48,9 @@ const createExercise = async (req, res) => {
 
       exercise.save((err, result) => {
         if (err) throw err;
-        const { date, duration, description } = result._doc;
+        const { _id, date, duration, description } = result._doc;
         res.json({
-          _id: user._id,
+          _id,
           username: user.username,
           date,
           duration,
@@ -75,30 +76,35 @@ const getUsers = (req, res) => {
 
 const getAllLogs = (req, res) => {
   const { id } = req.params;
-  const { from, to, limit } = req.query;
+  const { from, to } = req.query;
 
-  const query = {};
+  const query = { _id: id };
+
+  if (from && to) {
+    const fromDate = from.split("-").map((date) => Number(date));
+    const toDate = to.split("-").map((date) => Number(date));
+    query.date = {
+      $gte: new Date(fromDate[0], fromDate[1], fromDate[2]),
+      $lte: new Date(toDate[0], toDate[1], toDate[2]),
+    };
+  }
 
   try {
-    User.findById(id, async (err, user) => {
+    Exercise.find(query, (err, result) => {
       if (err) throw err;
-      if (user) query.username = user.username;
-      if (from && to) {
-        const fromDate = from.split("-").map((date) => Number(date));
-        const toDate = to.split("-").map((date) => Number(date));
-        query.date = {
-          $gte: new Date(fromDate[0], fromDate[1], fromDate[2]),
-          $lte: new Date(toDate[0], toDate[1], toDate[2]),
-        };
-      }
 
-      const exercise = await Exercise.find(query).limit(Number(limit) || 10);
+      console.log({
+        _id: id,
+        username: result[0].username,
+        count: result.length,
+        log: [...result],
+      });
 
       res.json({
         _id: id,
-        username: user.username,
-        count: exercise.length,
-        log: [...exercise],
+        username: result[0].username,
+        count: result.length,
+        log: [...result],
       });
     });
   } catch (err) {
