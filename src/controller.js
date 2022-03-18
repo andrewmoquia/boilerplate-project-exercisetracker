@@ -77,14 +77,23 @@ const getAllLogs = (req, res) => {
   const { id } = req.params;
   const { from, to, limit } = req.query;
 
-  console.log({ from, to, limit });
+  const query = {};
+
   try {
     User.findById(id, async (err, user) => {
       if (err) throw err;
-      const exercise = await Exercise.find({
-        username: user.username,
-        date: { $gte: new Date(from), $lt: new Date(to) },
-      }).limit(Number(limit));
+      if (user) query.username = user.username;
+      if (from && to) {
+        const fromDate = from.split("-").map((date) => Number(date));
+        const toDate = to.split("-").map((date) => Number(date));
+        query.date = {
+          $gte: new Date(fromDate[0], fromDate[1], fromDate[2]),
+          $lte: new Date(toDate[0], toDate[1], toDate[2]),
+        };
+      }
+
+      const exercise = await Exercise.find(query).limit(Number(limit) || 10);
+
       res.json({
         _id: id,
         username: user.username,
