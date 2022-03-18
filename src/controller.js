@@ -35,7 +35,7 @@ const createExercise = async (req, res) => {
 
       const exercise = new Exercise(
         {
-          _id,
+          user_id: _id,
           username: user.username,
           description,
           duration,
@@ -48,7 +48,7 @@ const createExercise = async (req, res) => {
 
       exercise.save((err, result) => {
         if (err) throw err;
-        const { _id, date, duration, description } = result._doc;
+        const { date, duration, description } = result._doc;
         res.json({
           _id,
           username: user.username,
@@ -74,37 +74,67 @@ const getUsers = (req, res) => {
   }
 };
 
-const getAllLogs = (req, res) => {
+const getUserLogs = (req, res) => {
   const { id } = req.params;
   const { from, to } = req.query;
-
-  const query = { _id: id };
-
-  if (from && to) {
-    const fromDate = from.split("-").map((date) => Number(date));
-    const toDate = to.split("-").map((date) => Number(date));
-    query.date = {
-      $gte: new Date(fromDate[0], fromDate[1], fromDate[2]),
-      $lte: new Date(toDate[0], toDate[1], toDate[2]),
-    };
-  }
+  const query = {};
 
   try {
-    Exercise.find(query, (err, result) => {
+    User.findById(id, async (err, user) => {
       if (err) throw err;
+      if (user) query.username = user.username;
 
-      console.log({
-        _id: id,
-        username: result[0].username,
-        count: result.length,
-        log: [...result],
-      });
+      if (from && to) {
+        const fromDate = from.split("-").map((date) => Number(date));
+        const toDate = to.split("-").map((date) => Number(date));
+        console.log({ fromDate, toDate });
+        query.date = {
+          $gte: new Date(fromDate[0], fromDate[1], fromDate[2]),
+          $lte: new Date(toDate[0], toDate[1], toDate[2]),
+        };
+      }
+
+      const exercise = await Exercise.find(query);
 
       res.json({
         _id: id,
-        username: result[0].username,
-        count: result.length,
-        log: [...result],
+        username: user.username,
+        count: exercise.length,
+        log: [...exercise],
+      });
+    });
+  } catch (err) {
+    if (err) throw err;
+  }
+};
+
+const getAllLogs = (req, res) => {
+  const { _id } = req.params;
+  const { from, to, limit } = req.query;
+  const query = {};
+
+  try {
+    User.findById(_id, async (err, user) => {
+      if (err) throw err;
+      if (user) query.username = user.username;
+
+      if (from && to) {
+        const fromDate = from.split("-").map((date) => Number(date));
+        const toDate = to.split("-").map((date) => Number(date));
+        console.log({ fromDate, toDate });
+        query.date = {
+          $gte: new Date(fromDate[0], fromDate[1], fromDate[2]),
+          $lte: new Date(toDate[0], toDate[1], toDate[2]),
+        };
+      }
+
+      const exercise = await Exercise.find(query).limit(Number(limit) || 10);
+
+      res.json({
+        _id,
+        username: user.username,
+        count: exercise.length,
+        log: [...exercise],
       });
     });
   } catch (err) {
@@ -117,4 +147,5 @@ module.exports = {
   createExercise,
   getUsers,
   getAllLogs,
+  getUserLogs,
 };
