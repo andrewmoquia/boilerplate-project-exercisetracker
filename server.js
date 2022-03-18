@@ -25,9 +25,9 @@ const logSchema = new Schema({
 });
 
 // Models
-const User = mongoose.model("users", userSchema);
-const Exercise = mongoose.model("exercises", exerciseSchema);
-const Log = mongoose.model("logs", logSchema);
+const User = mongoose.model("usersFreeCodeCamp", userSchema);
+const Exercise = mongoose.model("exercisesFreeCodeCamp", exerciseSchema);
+const Log = mongoose.model("logsFreeCodeCamp", logSchema);
 
 // Config
 const mongoURI = process.env.MONGO_URI || "mongouri";
